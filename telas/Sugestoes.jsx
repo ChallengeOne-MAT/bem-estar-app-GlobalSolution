@@ -1,35 +1,43 @@
-import React from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 
-const sugestoes = [
-  {id:1, descricao:'Faça uma pausa de 5 minutos', tipo:'pausa'},
-  {id:2, descricao:'Alongue os ombros e pescoço', tipo:'alongamento'},
-  {id:3, descricao:'Respire profundamente por 2 minutos', tipo:'respiração'}
-];
+export default function Sugestoes({ mudarTela }) {
+  const [sugestao, setSugestao] = useState('');
 
-export default function Sugestoes({ voltar }) {
+  const enviarSugestao = () => {
+    if (!sugestao) return Alert.alert('Atenção', 'Escreva algo antes de enviar!');
+    Alert.alert('Sucesso', 'Sugestão enviada com sucesso!');
+    setSugestao('');
+    mudarTela('home');
+  };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Sugestões rápidas</Text>
-      <FlatList
-        data={sugestoes}
-        keyExtractor={i=>String(i.id)}
-        renderItem={({item})=>(
-          <View style={styles.item}>
-            <Text style={{fontWeight:'700'}}>{item.descricao}</Text>
-            <Text style={{color:'#666'}}>{item.tipo}</Text>
-          </View>
-        )}
+      <Text style={styles.title}>Sugestões</Text>
+      <TextInput
+        style={[styles.input, { height: 100 }]}
+        placeholder="Escreva sua sugestão..."
+        multiline
+        value={sugestao}
+        onChangeText={setSugestao}
       />
-      <TouchableOpacity onPress={voltar} style={{marginTop:12}}>
-        <Text style={{color:'#999'}}>Voltar</Text>
+
+      <TouchableOpacity style={styles.btn} onPress={enviarSugestao}>
+        <Text style={styles.btnText}>Enviar</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity onPress={() => mudarTela('home')} style={{ marginTop: 12 }}>
+        <Text style={styles.link}>Voltar</Text>
       </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container:{flex:1,padding:16},
-  title:{fontSize:20,fontWeight:'700',textAlign:'center'},
-  item:{padding:12,borderBottomWidth:1,borderColor:'#eee'}
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 16, backgroundColor: '#f5f5f7' },
+  title: { fontSize: 24, fontWeight: '700', marginBottom: 20, color: '#1a1a2e' },
+  input: { borderWidth: 1, borderColor: '#ccc', padding: 12, borderRadius: 10, width: '85%', marginBottom: 12, backgroundColor: '#fff' },
+  btn: { backgroundColor: '#4c67f2', padding: 14, borderRadius: 10, width: '85%', alignItems: 'center', marginTop: 10 },
+  btnText: { color: '#fff', fontWeight: '700', fontSize: 16, textAlign: 'center' },
+  link: { color: '#4c67f2', fontWeight: '600', fontSize: 15 }
 });

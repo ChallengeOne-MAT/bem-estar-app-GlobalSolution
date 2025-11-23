@@ -1,37 +1,72 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import api from '../src/services/api';
 
 export default function DetalhesUsuario({ routeData, voltar }) {
   const user = routeData || {};
   const [historico, setHistorico] = useState([]);
 
-  useEffect(()=>{ load(); },[]);
+  useEffect(() => { loadHistorico(); }, []);
 
-  const load = async () => {
-    const h = await api.buscarHistorico(user.id_usuario);
-    setHistorico(h);
+  const loadHistorico = async () => {
+    try {
+      const h = await api.buscarHistorico(user.id_usuario);
+      setHistorico(h);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Detalhes — {user.nome}</Text>
 
-      <Text style={{marginTop:12,fontWeight:'700'}}>Últimos registros:</Text>
-      {historico.slice(0,5).map((h,i)=>(
-        <Text key={i}>{new Date(h.data_feedback).toLocaleDateString()} — Humor {h.humor} — Estresse {h.nivel_estresse}</Text>
+      <Text style={styles.subTitle}>Últimos registros:</Text>
+      {historico.slice(0,5).map((h,i) => (
+        <View key={i} style={styles.item}>
+          <Text>{new Date(h.data_feedback).toLocaleDateString()} — Humor {h.humor} — Estresse {h.nivel_estresse}</Text>
+        </View>
       ))}
 
       <TouchableOpacity style={styles.btn} onPress={voltar}>
         <Text style={styles.btnText}>Voltar</Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container:{flex:1,padding:16},
-  title:{fontSize:20,fontWeight:'700'},
-  btn:{backgroundColor:'#4c67f2',padding:12,borderRadius:10,marginTop:20,alignItems:'center'},
-  btnText:{color:'white',fontWeight:'700'}
+  container: {
+    padding: 16,
+    backgroundColor: '#f5f5f7',
+    flexGrow: 1
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 16,
+    color: '#1a1a2e'
+  },
+  subTitle: {
+    fontWeight: '700',
+    marginBottom: 10,
+    fontSize: 16
+  },
+  item: {
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderColor: '#ccc'
+  },
+  btn: {
+    marginTop: 20,
+    backgroundColor: '#4c67f2',
+    padding: 14,
+    borderRadius: 10,
+    alignItems: 'center'
+  },
+  btnText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 16
+  }
 });

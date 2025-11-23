@@ -1,45 +1,58 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 
-export default function LoginUsuario({ mudarTela, setUsuario }) {
+export default function LoginUsuario({ mudarTela, loginUsuario }) {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
 
   const login = () => {
     if (!email || !senha) return alert('Preencha email e senha');
-    // demo: seta email como nome (substituir por validação real/API depois)
-    setUsuario({ nome: email, gestor: false });
-    mudarTela('home');
+    loginUsuario(email, senha);
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Login Usuário</Text>
+      <View style={styles.card}>
+        <Text style={styles.title}>Login Usuário</Text>
 
-      <TextInput placeholder="Email" value={email} onChangeText={setEmail} style={styles.input} keyboardType="email-address" autoCapitalize="none" />
-      <TextInput placeholder="Senha" value={senha} onChangeText={setSenha} style={styles.input} secureTextEntry />
+        <TextInput
+          placeholder="Email"
+          placeholderTextColor="#ccc"
+          value={email}
+          onChangeText={setEmail}
+          style={styles.input}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
 
-      <TouchableOpacity style={styles.btn} onPress={login}>
-        <Text style={styles.btnText}>Entrar</Text>
-      </TouchableOpacity>
+        <TextInput
+          placeholder="Senha"
+          placeholderTextColor="#ccc"
+          value={senha}
+          onChangeText={setSenha}
+          secureTextEntry
+          style={styles.input}
+        />
 
-      <TouchableOpacity onPress={() => mudarTela('cadastroUsuario')} style={{ marginTop: 12 }}>
-        <Text style={styles.link}>Não tem conta? Cadastre-se</Text>
-      </TouchableOpacity>
+        <TouchableOpacity style={styles.btn} onPress={login}>
+          <Text style={styles.btnText}>Entrar</Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => mudarTela('boasVindas')} style={{ marginTop: 12 }}>
-        <Text style={styles.linkSecondary}>Voltar</Text>
-      </TouchableOpacity>
+        <TouchableOpacity onPress={() => mudarTela('cadastroUsuario')} style={styles.linkContainer}>
+          <Text style={styles.link}>Não tem conta? Cadastre-se</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 16 },
-  title: { fontSize: 22, fontWeight: '700', marginBottom: 20 },
-  input: { borderWidth: 1, borderColor: '#ddd', padding: 10, borderRadius: 8, marginTop: 10, width: '85%' },
-  btn: { backgroundColor: '#4c67f2', padding: 12, borderRadius: 10, alignItems: 'center', marginTop: 12, width: '85%' },
-  btnText: { color: 'white', fontWeight: '700' },
-  link: { color: '#4c67f2' },
-  linkSecondary: { color: '#999' },
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, backgroundColor: '#1f1f2e' },
+  card: { width: '90%', backgroundColor: '#2a2a3d', borderRadius: 20, padding: 30 },
+  title: { fontSize: 26, fontWeight: '800', color: '#fff', marginBottom: 25, textAlign: 'center' },
+  input: { width: '100%', padding: 14, marginBottom: 15, borderRadius: 15, backgroundColor: '#3b3b55', color: '#fff', fontSize: 16 },
+  btn: { backgroundColor: '#6BCB77', padding: 15, borderRadius: 15, alignItems: 'center', marginTop: 10 },
+  btnText: { color: '#fff', fontSize: 17, fontWeight: '700' },
+  linkContainer: { marginTop: 12, alignItems: 'center' },
+  link: { color: '#4db8ff', fontWeight: '600', fontSize: 15 },
 });
