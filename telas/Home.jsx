@@ -3,12 +3,13 @@ import { View, Text, TouchableOpacity, StyleSheet, Alert, Picker } from 'react-n
 
 export default function Home({ mudarTela, usuario, setUsuario, setGestorInbox }) {
   const [ambiente, setAmbiente] = useState(usuario.ambiente || 'home');
-  const sessionStartRef = useRef(usuario.sessionStart || Date.now());
-  const pauseStartRef = useRef(usuario.pauseStart || null);
-  const [isOnPause, setIsOnPause] = useState(usuario.isOnPause || false);
-  const [secondsSinceStart, setSecondsSinceStart] = useState(0);
-  const minuteAlertShownRef = useRef(false);
+  const sessionStartRef = useRef(Date.now());
+  const pauseStartRef = useRef(null);
+  const tempoAcumuladoRef = useRef(usuario.tempoSessaoAcumulado || 0);
+  const [isOnPause, setIsOnPause] = useState(false);
+  const [secondsSinceStart, setSecondsSinceStart] = useState(tempoAcumuladoRef.current);
   const intervalRef = useRef(null);
+  const minuteAlertShownRef = useRef(false);
   const [mostrarMsg, setMostrarMsg] = useState(false);
 
   const theme = ambiente === 'empresa'
@@ -18,13 +19,15 @@ export default function Home({ mudarTela, usuario, setUsuario, setGestorInbox })
   const startInterval = () => {
     if (intervalRef.current) return;
     intervalRef.current = setInterval(() => {
-      const now = Date.now();
-      const seconds = Math.floor((now - sessionStartRef.current) / 1000);
-      setSecondsSinceStart(seconds);
-      if (seconds > 0 && seconds % 60 === 0) {
+      const agora = Date.now();
+      const segundos = tempoAcumuladoRef.current + Math.floor((agora - sessionStartRef.current) / 1000);
+      setSecondsSinceStart(segundos);
+
+      if (segundos > 0 && segundos % 60 === 0) {
         setUsuario(prev => ({ ...prev, tempoTela: (prev.tempoTela || 0) + 1 }));
       }
-      if (seconds >= 60 && !minuteAlertShownRef.current) {
+
+      if (segundos >= 60 && !minuteAlertShownRef.current) {
         minuteAlertShownRef.current = true;
         setMostrarMsg(true);
       }
@@ -39,18 +42,16 @@ export default function Home({ mudarTela, usuario, setUsuario, setGestorInbox })
   };
 
   useEffect(() => {
-    sessionStartRef.current = usuario.sessionStart || Date.now();
-    pauseStartRef.current = usuario.pauseStart || null;
-    setIsOnPause(usuario.isOnPause || false);
-    if (!usuario.isOnPause) startInterval();
-    else stopInterval();
+    sessionStartRef.current = Date.now();
+    if (!isOnPause) startInterval();
     return () => stopInterval();
   }, []);
 
   const handleAmbienteChange = (novoAmbiente) => {
     const agora = Date.now();
-    const duracaoSegundos = Math.floor((agora - sessionStartRef.current) / 1000);
-    if (!isOnPause && duracaoSegundos > 0) {
+    const duracaoSegundos = tempoAcumuladoRef.current + Math.floor((agora - sessionStartRef.current) / 1000);
+
+    if (duracaoSegundos > 0) {
       const entry = {
         id: `${Date.now()}-sessao`,
         tipo: 'Sessão',
@@ -61,9 +62,11 @@ export default function Home({ mudarTela, usuario, setUsuario, setGestorInbox })
       };
       setUsuario(prev => ({ ...prev, historico: [entry, ...(prev.historico || [])] }));
     }
+
     setAmbiente(novoAmbiente);
     setUsuario(prev => ({ ...prev, ambiente: novoAmbiente }));
-    sessionStartRef.current = Date.now();
+    sessionStartRef.current = agora;
+    tempoAcumuladoRef.current = 0;
     setSecondsSinceStart(0);
     minuteAlertShownRef.current = false;
     setIsOnPause(false);
@@ -72,28 +75,14 @@ export default function Home({ mudarTela, usuario, setUsuario, setGestorInbox })
   };
 
   const togglePausa = () => {
+    const agora = Date.now();
     if (!isOnPause) {
-      const agora = Date.now();
-      const durSess = Math.floor((agora - sessionStartRef.current) / 1000);
-      if (durSess > 0) {
-        const sessEntry = {
-          id: `${Date.now()}-sessao`,
-          tipo: 'Sessão',
-          inicio: new Date(sessionStartRef.current).toLocaleString(),
-          fim: new Date(agora).toLocaleString(),
-          duracaoSegundos: durSess,
-          ambiente
-        };
-        setUsuario(prev => ({ ...prev, historico: [sessEntry, ...(prev.historico || [])] }));
-      }
-      pauseStartRef.current = Date.now();
+      tempoAcumuladoRef.current += Math.floor((agora - sessionStartRef.current) / 1000);
+      pauseStartRef.current = agora;
       setIsOnPause(true);
       stopInterval();
-      setSecondsSinceStart(0);
-      minuteAlertShownRef.current = false;
-      Alert.alert('Pausa iniciada', 'Pausa iniciada — descanse um pouco.');
+      Alert.alert('Pausa iniciada', 'Você começou a pausa.');
     } else {
-      const agora = Date.now();
       const duracaoPausa = Math.floor((agora - (pauseStartRef.current || agora)) / 1000);
       const pausaEntry = {
         id: `${Date.now()}-pausa`,
@@ -106,29 +95,19 @@ export default function Home({ mudarTela, usuario, setUsuario, setGestorInbox })
       setUsuario(prev => ({
         ...prev,
         pausas: (prev.pausas || 0) + 1,
-        ultimaPausa: new Date(agora).toLocaleString(),
         historico: [pausaEntry, ...(prev.historico || [])]
       }));
+
       if (typeof setGestorInbox === 'function') {
         setGestorInbox(prev => [pausaEntry, ...(prev || [])]);
       }
-      sessionStartRef.current = Date.now();
+
+      sessionStartRef.current = agora;
       pauseStartRef.current = null;
       setIsOnPause(false);
-      setSecondsSinceStart(0);
-      minuteAlertShownRef.current = false;
       startInterval();
-      Alert.alert('Pausa finalizada', `Você ficou em pausa por ${Math.floor(duracaoPausa/60)}m ${duracaoPausa%60}s`);
-    }
-  };
 
-  const voltarBoasVindas = () => {
-    if (typeof mudarTela === 'function') {
-      try {
-        mudarTela('boasVindas', { preserveSession: false });
-      } catch (e) {
-        mudarTela('boasVindas');
-      }
+      Alert.alert('Pausa finalizada', `Você ficou em pausa por ${Math.floor(duracaoPausa / 60)}m ${duracaoPausa % 60}s`);
     }
   };
 
@@ -144,7 +123,11 @@ export default function Home({ mudarTela, usuario, setUsuario, setGestorInbox })
       <Text style={[styles.subtitle, { color: '#ccc' }]}>Tempo total hoje: {usuario.tempoTela ?? 0} min</Text>
 
       <Text style={[styles.label, { color: '#fff' }]}>Ambiente atual:</Text>
-      <Picker selectedValue={ambiente} onValueChange={handleAmbienteChange} style={[styles.picker, { backgroundColor: theme.card }]}>
+      <Picker
+        selectedValue={ambiente}
+        onValueChange={handleAmbienteChange}
+        style={[styles.picker, { backgroundColor: theme.card }]}
+      >
         <Picker.Item label="Home Office" value="home" />
         <Picker.Item label="Empresa" value="empresa" />
         <Picker.Item label="Em Casa" value="casa" />
@@ -157,11 +140,17 @@ export default function Home({ mudarTela, usuario, setUsuario, setGestorInbox })
         <Text style={styles.btnText}>{isOnPause ? 'Finalizar Pausa' : 'Iniciar Pausa'}</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={[styles.btnPrimary, { backgroundColor: theme.primary }]} onPress={() => mudarTela('darFeedback')}>
+      <TouchableOpacity
+        style={[styles.btnPrimary, { backgroundColor: theme.primary }]}
+        onPress={() => mudarTela('darFeedback')}
+      >
         <Text style={styles.btnText}>Dar Feedback</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={[styles.btnPrimary, { backgroundColor: theme.primary }]} onPress={() => mudarTela('relatorios')}>
+      <TouchableOpacity
+        style={[styles.btnPrimary, { backgroundColor: theme.primary }]}
+        onPress={() => mudarTela('relatorios')}
+      >
         <Text style={styles.btnText}>Ver Relatórios</Text>
       </TouchableOpacity>
 
@@ -169,16 +158,22 @@ export default function Home({ mudarTela, usuario, setUsuario, setGestorInbox })
         <Text style={styles.btnOutlineText}>Histórico</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={[styles.btnOutline, { marginTop: 20 }]} onPress={voltarBoasVindas}>
-        <Text style={styles.btnOutlineText}>Voltar para BoasVindas</Text>
-      </TouchableOpacity>
+  <TouchableOpacity style={styles.btnOutline} onPress={() => mudarTela('boasVindas')}>
+  <Text style={styles.btnOutlineText}>Voltar ao SejaBemVindos</Text>
+</TouchableOpacity>
+
 
       <Text style={[styles.status, { color: '#ccc' }]}>Sessão atual: {fmt(secondsSinceStart)}</Text>
-      <Text style={[styles.status, { color: '#ccc' }]}>{isOnPause ? 'Você está em pausa' : (ambiente === 'empresa' ? 'Trabalhando (empresa)' : 'Em casa / Home Office')}</Text>
+      <Text style={[styles.status, { color: '#ccc' }]}>
+        {isOnPause ? 'Você está em pausa' :
+          (ambiente === 'empresa' ? 'Trabalhando (empresa)' : 'Em casa / Home Office')}
+      </Text>
 
       {mostrarMsg && (
         <View style={styles.msgContainer}>
-          <Text style={styles.msgText}>Você ficou tempo demais sem interagir! Que tal beber água, se alongar ou fazer uma pausa?</Text>
+          <Text style={styles.msgText}>
+            Você ficou tempo demais sem interagir! Que tal beber água, se alongar ou fazer uma pausa?
+          </Text>
           <TouchableOpacity style={styles.fecharBtn} onPress={() => setMostrarMsg(false)}>
             <Text style={styles.fecharText}>Fechar</Text>
           </TouchableOpacity>

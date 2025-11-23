@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { View } from 'react-native';
-import LoginUsuario from  './telas/LoginUsuario'
+import LoginUsuario from './telas/LoginUsuario';
 import CadastroUsuario from './telas/CadastroUsuario';
 import Home from './telas/Home';
 import DarFeedback from './telas/DarFeedback';
 import DashboardGestor from './telas/DashboardGestor';
+import Historico from './telas/Historico';
+import Relatorios from './telas/Relatorios';
 
 export default function App() {
   const [tela, setTela] = useState('loginUsuario');
@@ -37,11 +39,29 @@ export default function App() {
       case 'cadastroUsuario':
         return <CadastroUsuario mudarTela={mudarTela} cadastrarUsuario={cadastrarUsuario} />;
       case 'home':
-        return <Home usuario={usuarioLogado} mudarTela={mudarTela} setGestorInbox={setGestorInbox} />;
+        return <Home 
+                  usuario={usuarioLogado} 
+                  setUsuario={setUsuarioLogado} 
+                  setGestorInbox={setGestorInbox} 
+                  mudarTela={mudarTela} 
+                />;
       case 'darFeedback':
-        return <DarFeedback usuario={usuarioLogado} setGestorInbox={setGestorInbox} mudarTela={mudarTela} />;
+        return <DarFeedback 
+                  usuario={usuarioLogado} 
+                  setUsuario={setUsuarioLogado} 
+                  setGestorInbox={setGestorInbox} 
+                  mudarTela={mudarTela} 
+                />;
       case 'dashboardGestor':
-        return <DashboardGestor usuario={usuarioLogado} gestorInbox={gestorInbox} voltar={() => mudarTela('home')} />;
+        return <DashboardGestor 
+                  usuario={usuarioLogado} 
+                  gestorInbox={gestorInbox} 
+                  voltar={() => mudarTela('home')} 
+                />;
+      case 'historico':
+        return <Historico usuario={usuarioLogado} mudarTela={mudarTela} />;
+      case 'relatorios':
+        return <Relatorios usuario={usuarioLogado} mudarTela={mudarTela} />;
       default:
         return <LoginUsuario mudarTela={mudarTela} loginUsuario={loginUsuario} />;
     }
