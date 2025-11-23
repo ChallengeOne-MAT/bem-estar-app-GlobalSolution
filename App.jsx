@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { View } from 'react-native';
-import LoginUsuario from './LoginUsuario';
-import CadastroUsuario from './CadastroUsuario';
-import Home from './Home';
-import DarFeedback from './DarFeedback';
-import DashboardGestor from './DashboardGestor';
+import LoginUsuario from  './telas/LoginUsuario'
+import CadastroUsuario from './telas/CadastroUsuario';
+import Home from './telas/Home';
+import DarFeedback from './telas/DarFeedback';
+import DashboardGestor from './telas/DashboardGestor';
 
 export default function App() {
   const [tela, setTela] = useState('loginUsuario');
