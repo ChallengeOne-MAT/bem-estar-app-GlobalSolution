@@ -27,11 +27,11 @@ Opcional: Emulador Android/iOS ou app Expo Go no celular.
 No terminal, rode:
 
 git clone 
-cd NOME-DO-REPO
+cd bem-estar-app
 
 3️⃣ Instalar dependências
 
-Dentro da pasta do projeto:
+Dentro da pasta do projeto:  https://github.com/ChallengeOne-MAT/bem-estar-app-GlobalSolution.git
 
 npm install
 # ou
